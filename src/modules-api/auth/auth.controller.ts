@@ -57,8 +57,14 @@ export class AuthController {
     return result;
   }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.authService.remove(+id);
-  // }
+  @Post('logout')
+  logout(@Res({passthrough: true}) res: Response) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    return {
+      message: 'Logout successfully'
+    }
+  }
+  
 }
