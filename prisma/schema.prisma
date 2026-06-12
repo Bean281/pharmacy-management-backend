@@ -1,0 +1,224 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/modules-system/prisma/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Batches {
+  id              Int               @id @default(autoincrement())
+  product_id      Int?
+  batch_number    String            @db.VarChar(50)
+  expiry_date     DateTime          @db.Date
+  import_price    Decimal?          @db.Decimal(12, 2)
+  quantity        Int               @default(0)
+  imported_at     DateTime?         @default(now()) @db.Timestamp(0)
+  supplier_name   String?           @db.VarChar(150)
+  note            String?           @db.Text
+  deletedBy       Int               @default(0)
+  isDeleted       Boolean           @default(false)
+  deletedAt       DateTime?         @db.Timestamp(0)
+  createdAt       DateTime          @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime          @default(now()) @db.Timestamp(0)
+  Products        Products?         @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Batches_ibfk_1")
+  Receipt_details Receipt_details[]
+  Sale_details    Sale_details[]
+
+  @@index([product_id], map: "product_id")
+}
+
+model Categories {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique(map: "name") @db.VarChar(100)
+  description String?    @db.Text
+  deletedBy   Int        @default(0)
+  isDeleted   Boolean    @default(false)
+  deletedAt   DateTime?  @db.Timestamp(0)
+  createdAt   DateTime   @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime   @default(now()) @db.Timestamp(0)
+  Products    Products[]
+}
+
+model Customers {
+  id            Int       @id @default(autoincrement())
+  customer_code String?   @unique(map: "customer_code") @db.VarChar(20)
+  name          String    @db.VarChar(150)
+  phone         String?   @unique(map: "phone") @db.VarChar(15)
+  address       String?   @db.Text
+  ward          String?   @db.VarChar(100)
+  district      String?   @db.VarChar(100)
+  city          String?   @db.VarChar(100)
+  birth_date    DateTime? @db.Date
+  gender        String?   @db.VarChar(10)
+  email         String?   @db.VarChar(100)
+  facebook      String?   @db.VarChar(100)
+  group_type    String?   @db.VarChar(50)
+  note          String?   @db.Text
+  total_spent   Decimal?  @default(0.00) @db.Decimal(15, 2)
+  deletedBy     Int       @default(0)
+  isDeleted     Boolean   @default(false)
+  deletedAt     DateTime? @db.Timestamp(0)
+  createdAt     DateTime  @default(now()) @db.Timestamp(0)
+  updatedAt     DateTime  @default(now()) @db.Timestamp(0)
+  Sales         Sales[]
+}
+
+model Manufacturers {
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(150)
+  country   String?    @db.VarChar(100)
+  deletedBy Int        @default(0)
+  isDeleted Boolean    @default(false)
+  deletedAt DateTime?  @db.Timestamp(0)
+  createdAt DateTime   @default(now()) @db.Timestamp(0)
+  updatedAt DateTime   @default(now()) @db.Timestamp(0)
+  Products  Products[]
+}
+
+model Products {
+  id                  Int               @id @default(autoincrement())
+  sku                 String?           @unique(map: "sku") @db.VarChar(50)
+  barcode             String?           @unique(map: "barcode") @db.VarChar(50)
+  name                String            @db.VarChar(255)
+  short_name          String?           @db.VarChar(100)
+  category_id         Int?
+  manufacturer_id     Int?
+  registration_number String?           @db.VarChar(50)
+  active_ingredient   String?           @db.Text
+  dosage              String?           @db.VarChar(100)
+  usage_form          String?           @db.VarChar(100)
+  packaging           String?           @db.VarChar(100)
+  cost_price          Decimal?          @default(0.00) @db.Decimal(12, 2)
+  selling_price       Decimal           @db.Decimal(12, 2)
+  min_stock           Int?              @default(10)
+  max_stock           Int?              @default(300)
+  location            String?           @db.VarChar(50)
+  weight              Decimal?          @db.Decimal(8, 2)
+  is_active           Boolean?          @default(true)
+  deletedBy           Int               @default(0)
+  isDeleted           Boolean           @default(false)
+  deletedAt           DateTime?         @db.Timestamp(0)
+  createdAt           DateTime          @default(now()) @db.Timestamp(0)
+  updatedAt           DateTime          @default(now()) @db.Timestamp(0)
+  Batches             Batches[]
+  Categories          Categories?       @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Products_ibfk_1")
+  Manufacturers       Manufacturers?    @relation(fields: [manufacturer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Products_ibfk_2")
+  Receipt_details     Receipt_details[]
+  Sale_details        Sale_details[]
+
+  @@index([category_id], map: "category_id")
+  @@index([manufacturer_id], map: "manufacturer_id")
+}
+
+model Receipt_details {
+  id           Int       @id @default(autoincrement())
+  receipt_id   Int?
+  product_id   Int?
+  batch_id     Int?
+  quantity     Int
+  import_price Decimal?  @db.Decimal(12, 2)
+  deletedBy    Int       @default(0)
+  isDeleted    Boolean   @default(false)
+  deletedAt    DateTime? @db.Timestamp(0)
+  createdAt    DateTime  @default(now()) @db.Timestamp(0)
+  updatedAt    DateTime  @default(now()) @db.Timestamp(0)
+  Receipts     Receipts? @relation(fields: [receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Receipt_details_ibfk_1")
+  Products     Products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Receipt_details_ibfk_2")
+  Batches      Batches?  @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Receipt_details_ibfk_3")
+
+  @@index([batch_id], map: "batch_id")
+  @@index([product_id], map: "product_id")
+  @@index([receipt_id], map: "receipt_id")
+}
+
+model Receipts {
+  id              Int               @id @default(autoincrement())
+  receipt_code    String            @unique(map: "receipt_code") @db.VarChar(30)
+  supplier_name   String?           @db.VarChar(150)
+  total_amount    Decimal?          @default(0.00) @db.Decimal(15, 2)
+  imported_by     Int?
+  imported_at     DateTime?         @default(now()) @db.Timestamp(0)
+  note            String?           @db.Text
+  is_retail       Boolean?          @default(false)
+  deletedBy       Int               @default(0)
+  isDeleted       Boolean           @default(false)
+  deletedAt       DateTime?         @db.Timestamp(0)
+  createdAt       DateTime          @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime          @default(now()) @db.Timestamp(0)
+  Receipt_details Receipt_details[]
+  User            User?             @relation(fields: [imported_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Receipts_ibfk_1")
+
+  @@index([imported_by], map: "imported_by")
+}
+
+model Sale_details {
+  id         Int       @id @default(autoincrement())
+  sale_id    Int?
+  product_id Int?
+  batch_id   Int?
+  quantity   Int
+  unit_price Decimal   @db.Decimal(12, 2)
+  amount     Decimal   @db.Decimal(14, 2)
+  deletedBy  Int       @default(0)
+  isDeleted  Boolean   @default(false)
+  deletedAt  DateTime? @db.Timestamp(0)
+  createdAt  DateTime  @default(now()) @db.Timestamp(0)
+  updatedAt  DateTime  @default(now()) @db.Timestamp(0)
+  Sales      Sales?    @relation(fields: [sale_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Sale_details_ibfk_1")
+  Products   Products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Sale_details_ibfk_2")
+  Batches    Batches?  @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Sale_details_ibfk_3")
+
+  @@index([batch_id], map: "batch_id")
+  @@index([product_id], map: "product_id")
+  @@index([sale_id], map: "sale_id")
+}
+
+model Sales {
+  id             Int            @id @default(autoincrement())
+  invoice_code   String         @unique(map: "invoice_code") @db.VarChar(30)
+  customer_id    Int?
+  customer_name  String?        @db.VarChar(150)
+  customer_phone String?        @db.VarChar(15)
+  total_amount   Decimal?       @default(0.00) @db.Decimal(15, 2)
+  discount       Decimal?       @default(0.00) @db.Decimal(12, 2)
+  final_amount   Decimal        @db.Decimal(15, 2)
+  payment_method String?        @db.VarChar(50)
+  sold_by        Int?
+  sold_at        DateTime?      @default(now()) @db.Timestamp(0)
+  note           String?        @db.Text
+  deletedBy      Int            @default(0)
+  isDeleted      Boolean        @default(false)
+  deletedAt      DateTime?      @db.Timestamp(0)
+  createdAt      DateTime       @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime       @default(now()) @db.Timestamp(0)
+  Sale_details   Sale_details[]
+  Customers      Customers?     @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Sales_ibfk_1")
+  User           User?          @relation(fields: [sold_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Sales_ibfk_2")
+
+  @@index([customer_id], map: "customer_id")
+  @@index([sold_by], map: "sold_by")
+}
+
+model User {
+  id         Int        @id @default(autoincrement())
+  email      String     @unique(map: "email") @db.VarChar(255)
+  password   String?    @db.VarChar(255)
+  fullName   String?    @db.VarChar(255)
+  avatar     String?    @db.Text
+  age        Int?
+  role       String?    @db.VarChar(255)
+  totpSecret String?    @db.VarChar(255)
+  googleId   String?    @db.VarChar(255)
+  is_active  Boolean?   @default(true)
+  last_login DateTime?  @db.Timestamp(0)
+  deletedBy  Int        @default(0)
+  isDeleted  Boolean    @default(false)
+  deletedAt  DateTime?  @db.Timestamp(0)
+  createdAt  DateTime   @default(now()) @db.Timestamp(0)
+  updatedAt  DateTime   @default(now()) @db.Timestamp(0)
+  Receipts   Receipts[]
+  Sales      Sales[]
+}
