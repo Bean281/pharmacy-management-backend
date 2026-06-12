@@ -13,12 +13,15 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Request, Response } from 'express';
 import { RegisterDto } from './dto/register.dto';
+import { Public } from 'src/common/decorators/public.decorator';
+import { User } from 'src/common/decorators/user.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
+  @Public()
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -32,6 +35,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Public()
   async register(@Body() registerDto: RegisterDto) {
     const result = await this.authService.register(registerDto);
     return result;
@@ -45,6 +49,12 @@ export class AuthController {
     res.cookie('refreshToken', result.refreshToken);
 
     return true;
+  }
+
+  @Get('get-info')
+  async getInfo(@User() user: any) {
+    const result = await this.authService.getInfo(user.userId);
+    return result;
   }
 
   // @Delete(':id')

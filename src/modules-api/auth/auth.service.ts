@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/modules-system/prisma/prisma.service';
 import { TokenService } from 'src/modules-system/token/token.service';
 import { LoginDto } from './dto/login.dto';
@@ -18,7 +22,7 @@ export class AuthService {
   ) {}
 
   async login(body: LoginDto) {
-    const {email, password, token} = body;
+    const { email, password, token } = body;
 
     const userExist = await this.prisma.user.findUnique({
       where: {
@@ -26,21 +30,23 @@ export class AuthService {
       },
       omit: {
         password: false,
-      }
-    })
+      },
+    });
 
     if (!userExist) {
-      throw new BadRequestException("The user does not exist!")
+      throw new BadRequestException('The user does not exist!');
     }
 
     if (!userExist.password) {
-      throw new BadRequestException("You need to login by Google to update password!")
+      throw new BadRequestException(
+        'You need to login by Google to update password!',
+      );
     }
 
     const isPassword = bcrypt.compareSync(password, userExist.password);
 
     if (!isPassword) {
-      throw new BadRequestException("Wrong password!")
+      throw new BadRequestException('Wrong password!');
     }
 
     const accessToken = this.tokenService.createAccessToken(userExist.id);
@@ -48,13 +54,12 @@ export class AuthService {
 
     return {
       accessToken: accessToken,
-      refreshToken: refreshToken
-    }
-
+      refreshToken: refreshToken,
+    };
   }
 
   async register(body: RegisterDto) {
-    const {email, password, fullName} = body;
+    const { email, password, fullName } = body;
 
     const userExist = await this.prisma.user.findUnique({
       where: {
@@ -62,9 +67,10 @@ export class AuthService {
       },
     });
 
-
     if (userExist) {
-      throw new BadRequestException('User existed, please continue to login or assign new email!');
+      throw new BadRequestException(
+        'User existed, please continue to login or assign new email!',
+      );
     }
 
     const passwordHash = bcrypt.hashSync(password, 10);
@@ -74,16 +80,16 @@ export class AuthService {
         email: email,
         password: passwordHash,
         fullName: fullName,
-      }
-    })
+      },
+    });
 
-    console.log("New User", userNew);
+    console.log('New User', userNew);
 
     return true;
   }
 
   async refreshToken(req) {
-    const {accessToken, refreshToken} = req.cookies;
+    const { accessToken, refreshToken } = req.cookies;
 
     if (!accessToken) {
       throw new BadRequestException('There is no access token exist!');
@@ -97,17 +103,18 @@ export class AuthService {
       ignoreExpiration: true,
     });
 
-    const decodeRefreshToken = this.tokenService.verifyRefreshToken(refreshToken);
+    const decodeRefreshToken =
+      this.tokenService.verifyRefreshToken(refreshToken);
 
     if (decodeAccessToken.userId !== decodeRefreshToken.userId) {
-      throw new BadRequestException('Token is not available!')
+      throw new BadRequestException('Token is not available!');
     }
 
-    const userExist = await this.prisma.user.findUnique ({
+    const userExist = await this.prisma.user.findUnique({
       where: {
-        id: decodeAccessToken.userId
-      }
-    })
+        id: decodeAccessToken.userId,
+      },
+    });
 
     if (!userExist) {
       throw new BadRequestException('There is no user in DB');
@@ -118,12 +125,26 @@ export class AuthService {
 
     return {
       accessToken: accessTokenNew,
-      refreshToken: refreshTokenNew
-    }
-
+      refreshToken: refreshTokenNew,
+    };
   }
 
-  // create(createAuthDto: CreateAuthDto) {  
+  async getInfo(userId: number) {
+    const userInfo = await this.prisma.user.findUnique({
+      where: { id: userId },
+      omit: {
+        password: true,
+      },
+    });
+
+    if (!userInfo) {
+      throw new NotFoundException('User does not exist!');
+    }
+
+    return userInfo;
+  }
+
+  // create(createAuthDto: CreateAuthDto) {
   //   return 'This action adds a new auth';
   // }
 
